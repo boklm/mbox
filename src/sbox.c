@@ -39,6 +39,11 @@ int sbox_is_deleted(char *path)
     return is_deleted(os_deleted_fs, path);
 }
 
+int sbox_is_direct(char *path)
+{
+    return is_direct(os_deleted_fs, path);
+}
+
 static inline
 int __sbox_delete_file(char *path)
 {
@@ -69,6 +74,13 @@ static
 int __sbox_allow_path(char *path)
 {
     add_path_to_fsmap(&os_deleted_fs, path, PATH_ALLOWED);
+    return 1;
+}
+
+static
+int __sbox_direct_path(char *path)
+{
+    add_path_to_fsmap(&os_deleted_fs, path, PATH_DIRECT);
     return 1;
 }
 
@@ -607,6 +619,9 @@ int sbox_rewrite_path(struct tcb *tcp, int fd, int arg, int flag)
     }
     get_spn_from_hpn(hpn, spn, PATH_MAX);
 
+    if (sbox_is_direct(hpn))
+        return 1;
+
     // satisfying one of rewrite conditions
     if (flag != READWRITE_READ  \
         || sbox_is_deleted(hpn) \
@@ -649,6 +664,10 @@ void sbox_open_enter(struct tcb *tcp, int fd, int arg, int oflag)
     //   /proc: need to emulate /proc/pid/fd/*
     //   /dev : need to verify what is correct to do
     if (strncmp(hpn, "/dev/", 5) == 0 || strncmp(hpn, "/proc/", 6) == 0) {
+        return;
+    }
+
+    if (sbox_is_direct(hpn)) {
         return;
     }
 
@@ -1577,6 +1596,13 @@ void sbox_load_profile(char *profile)
                 char *path =  __parse_path_line(line);
                 dbg(profile, "hide-> %s", path);
                 __sbox_delete_file(path);
+                if (path) {
+                    free(path);
+                }
+            } else if (strstr(line, "direct:")) {
+                char *path = __parse_path_line(line);
+                dbg(profile, "direct-> %s", path);
+                __sbox_direct_path(path);
                 if (path) {
                     free(path);
                 }

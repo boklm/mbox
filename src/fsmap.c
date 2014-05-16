@@ -70,3 +70,27 @@ int is_deleted(struct fsmap *map, char *path)
 
     return 0;
 }
+
+int is_direct(struct fsmap *map, char *path)
+{
+    if (!map) {
+        return 0;
+    }
+    
+    char buf[PATH_MAX];
+    strncpy(buf, path, sizeof(buf));
+    
+    struct fsmap *s;
+    char *end = buf + strlen(buf);
+    do {
+        s = get_path_from_fsmap(map, buf);
+        if (s && (s->val & PATH_DIRECT))
+            return 1;
+        while (end != buf && *end != '/') {
+            end --;
+        }
+        *end = '\0';
+    } while (end != buf);
+    s = get_path_from_fsmap(map, "/");
+    return (s && (s->val & PATH_DIRECT));
+}

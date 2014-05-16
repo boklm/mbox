@@ -4,6 +4,7 @@
 
 #define PATH_DELETED (1<<0)
 #define PATH_ALLOWED (1<<1)
+#define PATH_DIRECT  (1<<2)
 
 struct fsmap {
     char key[PATH_MAX];
@@ -17,3 +18,4 @@ struct fsmap* get_path_from_fsmap(struct fsmap *map, char *key);
 int is_in_fsmap(struct fsmap *map, char *key);
 void free_fsmap(struct fsmap *map);
 int is_deleted(struct fsmap *map, char *path);
+int is_direct(struct fsmap *map, char *path);
